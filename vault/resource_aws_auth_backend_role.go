@@ -175,6 +175,17 @@ func awsAuthBackendRoleResource() *schema.Resource {
 	}
 }
 
+func setSlice(d *schema.ResourceData, k string, data map[string]interface{}) {
+	if v, ok := d.GetOk(k); ok {
+		iAmis := v.([]interface{})
+		amis := make([]string, 0, len(iAmis))
+		for _, iAmi := range iAmis {
+			amis = append(amis, iAmi.(string))
+		}
+		data[k] = amis
+	}
+}
+
 func awsAuthBackendRoleCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*api.Client)
 
@@ -210,63 +221,15 @@ func awsAuthBackendRoleCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if isEc2(authType, inferred) {
-		if v, ok := d.GetOk("bound_ami_id"); ok {
-			iAmis := v.([]interface{})
-			amis := make([]string, 0, len(iAmis))
-			for _, iAmi := range iAmis {
-				amis = append(amis, iAmi.(string))
-			}
-			data["bound_ami_id"] = amis
-		}
-		if v, ok := d.GetOk("bound_account_id"); ok {
-			iAmis := v.([]interface{})
-			amis := make([]string, 0, len(iAmis))
-			for _, iAmi := range iAmis {
-				amis = append(amis, iAmi.(string))
-			}
-			data["bound_account_id"] = amis
-		}
-		if v, ok := d.GetOk("bound_region"); ok {
-			iAmis := v.([]interface{})
-			amis := make([]string, 0, len(iAmis))
-			for _, iAmi := range iAmis {
-				amis = append(amis, iAmi.(string))
-			}
-			data["bound_region"] = amis
-		}
-		if v, ok := d.GetOk("bound_vpc_id"); ok {
-			iAmis := v.([]interface{})
-			amis := make([]string, 0, len(iAmis))
-			for _, iAmi := range iAmis {
-				amis = append(amis, iAmi.(string))
-			}
-			data["bound_vpc_id"] = amis
-		}
-		if v, ok := d.GetOk("bound_subnet_id"); ok {
-			iAmis := v.([]interface{})
-			amis := make([]string, 0, len(iAmis))
-			for _, iAmi := range iAmis {
-				amis = append(amis, iAmi.(string))
-			}
-			data["bound_subnet_id"] = amis
-		}
-		if v, ok := d.GetOk("bound_iam_role_arn"); ok {
-			iAmis := v.([]interface{})
-			amis := make([]string, 0, len(iAmis))
-			for _, iAmi := range iAmis {
-				amis = append(amis, iAmi.(string))
-			}
-			data["bound_iam_role_arn"] = amis
-		}
-		if v, ok := d.GetOk("bound_iam_instance_profile_arn"); ok {
-			iAmis := v.([]interface{})
-			amis := make([]string, 0, len(iAmis))
-			for _, iAmi := range iAmis {
-				amis = append(amis, iAmi.(string))
-			}
-			data["bound_iam_instance_profile_arn"] = amis
-		}
+		setSlice(d, "bound_ami_id", data)
+		setSlice(d, "bound_account_id", data)
+		setSlice(d, "bound_region", data)
+		setSlice(d, "bound_vpc_id", data)
+		setSlice(d, "bound_subnet_id", data)
+		setSlice(d, "bound_iam_role_arn", data)
+		setSlice(d, "bound_iam_instance_profile_arn", data)
 	}
+
 	if authType == "ec2" {
 		if v, ok := d.GetOk("role_tag"); ok {
 			data["role_tag"] = v.(string)
@@ -282,14 +245,9 @@ func awsAuthBackendRoleCreate(d *schema.ResourceData, meta interface{}) error {
 		if inferred != "" {
 			data["inferred_entity_type"] = inferred
 		}
-		if v, ok := d.GetOk("bound_iam_principal_arn"); ok {
-			iAmis := v.([]interface{})
-			amis := make([]string, 0, len(iAmis))
-			for _, iAmi := range iAmis {
-				amis = append(amis, iAmi.(string))
-			}
-			data["bound_iam_principal_arn"] = amis
-		}
+
+		setSlice(d, "bound_iam_principal_arn", data)
+
 		if v, ok := d.GetOk("inferred_aws_region"); ok {
 			data["inferred_aws_region"] = v.(string)
 		}
