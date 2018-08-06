@@ -144,7 +144,9 @@ func TestAccAWSAuthBackendRole_iamUpdate(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccAWSAuthBackendRoleCheck_attrs(backend, role),
 					resource.TestCheckResourceAttr("vault_aws_auth_backend_role.role",
-						"bound_iam_principal_arn", "arn:aws:iam::123456789012:role/MyRole/*"),
+						"bound_iam_principal_arn.#", "1"),
+					resource.TestCheckResourceAttr("vault_aws_auth_backend_role.role",
+						"bound_iam_principal_arn.0", "arn:aws:iam::123456789012:role/MyRole/*"),
 					resource.TestCheckResourceAttr("vault_aws_auth_backend_role.role",
 						"ttl", "30"),
 					resource.TestCheckResourceAttr("vault_aws_auth_backend_role.role",
@@ -254,9 +256,29 @@ func testAccAWSAuthBackendRoleCheck_attrs(backend, role string) resource.TestChe
 				apiData := resp.Data[apiAttr].([]interface{})
 				length := instanceState.Attributes[stateAttr+".#"]
 				if length == "" {
-					if len(resp.Data[apiAttr].([]interface{})) != 0 {
-						return fmt.Errorf("Expected state field %s to have %d entries, had 0", stateAttr, len(apiData))
+					foo := resp.Data[apiAttr]
+					ifoo := foo.([]interface{})
+
+					//so there is something that is of length in the response data that is not in the state data.
+
+					if len(ifoo) != 0 {
+						// can we check if instanceState
+						if len(ifoo) == 1 {
+							a := instanceState.Attributes[stateAttr]
+							b := ifoo[0]
+							if a == b {
+								match = true
+							} else {
+
+								return fmt.Errorf("wtf %v %v", a, b)
+							}
+
+						} else {
+							return fmt.Errorf("Expected state field %s to have %d entries, had 0", stateAttr, len(apiData))
+						}
+
 					}
+
 					match = true
 				} else {
 					count, err := strconv.Atoi(length)
@@ -296,12 +318,12 @@ resource "vault_aws_auth_backend_role" "role" {
   backend = "${vault_auth_backend.aws.path}"
   role = "%s"
   auth_type = "iam"
-  bound_ami_id = "ami-8c1be5f6"
-  bound_account_id = "123456789012"
-  bound_vpc_id = "vpc-b61106d4"
-  bound_subnet_id = "vpc-a33128f1"
-  bound_iam_role_arn = "arn:aws:iam::123456789012:role/S3Access"
-  bound_iam_instance_profile_arn = "arn:aws:iam::123456789012:instance-profile/Webserver"
+  bound_ami_id = ["ami-8c1be5f6"]
+  bound_account_id = ["123456789012"]
+  bound_vpc_id = ["vpc-b61106d4"]
+  bound_subnet_id = ["vpc-a33128f1"]
+  bound_iam_role_arn = ["arn:aws:iam::123456789012:role/S3Access"]
+  bound_iam_instance_profile_arn = ["arn:aws:iam::123456789012:instance-profile/Webserver"]
   inferred_entity_type = "ec2_instance"
   inferred_aws_region = "us-east-1"
   ttl = 60
@@ -321,7 +343,7 @@ resource "vault_aws_auth_backend_role" "role" {
   backend = "${vault_auth_backend.aws.path}"
   role = "%s"
   auth_type = "iam"
-  bound_iam_principal_arn = "arn:aws:iam::123456789012:role/*"
+  bound_iam_principal_arn = ["arn:aws:iam::123456789012:role/*"]
   resolve_aws_unique_ids = true
   ttl = 60
   max_ttl = 120
@@ -340,7 +362,7 @@ resource "vault_aws_auth_backend_role" "role" {
   backend = "${vault_auth_backend.aws.path}"
   role = "%s"
   auth_type = "iam"
-  bound_iam_principal_arn = "arn:aws:iam::123456789012:role/MyRole/*"
+  bound_iam_principal_arn = ["arn:aws:iam::123456789012:role/MyRole/*"]
   resolve_aws_unique_ids = true
   ttl = 30
   max_ttl = 60
@@ -359,13 +381,13 @@ resource "vault_aws_auth_backend_role" "role" {
   backend = "${vault_auth_backend.aws.path}"
   role = "%s"
   auth_type = "ec2"
-  bound_ami_id = "ami-8c1be5f6"
-  bound_account_id = "123456789012"
-  bound_region = "us-east-1"
-  bound_vpc_id = "vpc-b61106d4"
-  bound_subnet_id = "vpc-a33128f1"
-  bound_iam_role_arn = "arn:aws:iam::123456789012:role/S3Access"
-  bound_iam_instance_profile_arn = "arn:aws:iam::123456789012:instance-profile/Webserver"
+  bound_ami_id = ["ami-8c1be5f6"]
+  bound_account_id = ["123456789012"]
+  bound_region = ["us-east-1"]
+  bound_vpc_id = ["vpc-b61106d4"]
+  bound_subnet_id = ["vpc-a33128f1"]
+  bound_iam_role_arn = ["arn:aws:iam::123456789012:role/S3Access"]
+  bound_iam_instance_profile_arn = ["arn:aws:iam::123456789012:instance-profile/Webserver"]
   role_tag = "VaultRoleTag"
   disallow_reauthentication = true
   ttl = 60

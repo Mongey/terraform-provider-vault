@@ -42,39 +42,60 @@ func awsAuthBackendRoleResource() *schema.Resource {
 				ForceNew:    true,
 			},
 			"bound_ami_id": {
-				Type:        schema.TypeString,
+				Type:        schema.TypeList,
 				Optional:    true,
 				Description: "Only EC2 instances using this AMI ID will be permitted to log in.",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 			},
 			"bound_account_id": {
-				Type:        schema.TypeString,
+				Type:        schema.TypeList,
 				Optional:    true,
 				Description: "Only EC2 instances with this account ID in their identity document will be permitted to log in.",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 			},
 			"bound_region": {
-				Type:        schema.TypeString,
+				Type:        schema.TypeList,
 				Optional:    true,
 				Description: "Only EC2 instances in this region will be permitted to log in.",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 			},
 			"bound_vpc_id": {
-				Type:        schema.TypeString,
+				Type:        schema.TypeList,
 				Optional:    true,
 				Description: "Only EC2 instances associated with this VPC ID will be permitted to log in.",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 			},
 			"bound_subnet_id": {
-				Type:        schema.TypeString,
+				Type:        schema.TypeList,
 				Optional:    true,
 				Description: "Only EC2 instances associated with this subnet ID will be permitted to log in.",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 			},
 			"bound_iam_role_arn": {
-				Type:        schema.TypeString,
+				Type:        schema.TypeList,
 				Optional:    true,
 				Description: "Only EC2 instances that match this IAM role ARN will be permitted to log in.",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 			},
 			"bound_iam_instance_profile_arn": {
-				Type:        schema.TypeString,
+				Type:        schema.TypeList,
 				Optional:    true,
 				Description: "Only EC2 instances associated with an IAM instance profile ARN that matches this value will be permitted to log in.",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 			},
 			"role_tag": {
 				Type:        schema.TypeString,
@@ -82,9 +103,12 @@ func awsAuthBackendRoleResource() *schema.Resource {
 				Description: "The key of the tag on EC2 instance to use for role tags.",
 			},
 			"bound_iam_principal_arn": {
-				Type:        schema.TypeString,
+				Type:        schema.TypeList,
 				Optional:    true,
 				Description: "The IAM principal that must be authenticated using the iam auth method.",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 			},
 			"inferred_entity_type": {
 				Type:        schema.TypeString,
@@ -184,27 +208,63 @@ func awsAuthBackendRoleCreate(d *schema.ResourceData, meta interface{}) error {
 	if len(policies) > 0 {
 		data["policies"] = policies
 	}
-	if authType == "ec2" || (inferred == "ec2_instance" && authType == "iam") {
+
+	if isEc2(authType, inferred) {
 		if v, ok := d.GetOk("bound_ami_id"); ok {
-			data["bound_ami_id"] = v.(string)
+			iAmis := v.([]interface{})
+			amis := make([]string, 0, len(iAmis))
+			for _, iAmi := range iAmis {
+				amis = append(amis, iAmi.(string))
+			}
+			data["bound_ami_id"] = amis
 		}
 		if v, ok := d.GetOk("bound_account_id"); ok {
-			data["bound_account_id"] = v.(string)
+			iAmis := v.([]interface{})
+			amis := make([]string, 0, len(iAmis))
+			for _, iAmi := range iAmis {
+				amis = append(amis, iAmi.(string))
+			}
+			data["bound_account_id"] = amis
 		}
 		if v, ok := d.GetOk("bound_region"); ok {
-			data["bound_region"] = v.(string)
+			iAmis := v.([]interface{})
+			amis := make([]string, 0, len(iAmis))
+			for _, iAmi := range iAmis {
+				amis = append(amis, iAmi.(string))
+			}
+			data["bound_region"] = amis
 		}
 		if v, ok := d.GetOk("bound_vpc_id"); ok {
-			data["bound_vpc_id"] = v.(string)
+			iAmis := v.([]interface{})
+			amis := make([]string, 0, len(iAmis))
+			for _, iAmi := range iAmis {
+				amis = append(amis, iAmi.(string))
+			}
+			data["bound_vpc_id"] = amis
 		}
 		if v, ok := d.GetOk("bound_subnet_id"); ok {
-			data["bound_subnet_id"] = v.(string)
+			iAmis := v.([]interface{})
+			amis := make([]string, 0, len(iAmis))
+			for _, iAmi := range iAmis {
+				amis = append(amis, iAmi.(string))
+			}
+			data["bound_subnet_id"] = amis
 		}
 		if v, ok := d.GetOk("bound_iam_role_arn"); ok {
-			data["bound_iam_role_arn"] = v.(string)
+			iAmis := v.([]interface{})
+			amis := make([]string, 0, len(iAmis))
+			for _, iAmi := range iAmis {
+				amis = append(amis, iAmi.(string))
+			}
+			data["bound_iam_role_arn"] = amis
 		}
 		if v, ok := d.GetOk("bound_iam_instance_profile_arn"); ok {
-			data["bound_iam_instance_profile_arn"] = v.(string)
+			iAmis := v.([]interface{})
+			amis := make([]string, 0, len(iAmis))
+			for _, iAmi := range iAmis {
+				amis = append(amis, iAmi.(string))
+			}
+			data["bound_iam_instance_profile_arn"] = amis
 		}
 	}
 	if authType == "ec2" {
@@ -223,7 +283,12 @@ func awsAuthBackendRoleCreate(d *schema.ResourceData, meta interface{}) error {
 			data["inferred_entity_type"] = inferred
 		}
 		if v, ok := d.GetOk("bound_iam_principal_arn"); ok {
-			data["bound_iam_principal_arn"] = v.(string)
+			iAmis := v.([]interface{})
+			amis := make([]string, 0, len(iAmis))
+			for _, iAmi := range iAmis {
+				amis = append(amis, iAmi.(string))
+			}
+			data["bound_iam_principal_arn"] = amis
 		}
 		if v, ok := d.GetOk("inferred_aws_region"); ok {
 			data["inferred_aws_region"] = v.(string)
@@ -294,13 +359,15 @@ func awsAuthBackendRoleRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("backend", backend)
 	d.Set("role", role)
 	d.Set("auth_type", resp.Data["auth_type"])
-	d.Set("bound_ami_id", resp.Data["bound_ami_id"])
+
 	d.Set("bound_account_id", resp.Data["bound_account_id"])
-	d.Set("bound_region", resp.Data["bound_region"])
-	d.Set("bound_vpc_id", resp.Data["bound_vpc_id"])
-	d.Set("bound_subnet_id", resp.Data["bound_subnet_id"])
-	d.Set("bound_iam_role_arn", resp.Data["bound_iam_role_arn"])
+	d.Set("bound_ami_id", resp.Data["bound_ami_id"])
 	d.Set("bound_iam_instance_profile_arn", resp.Data["bound_iam_instance_profile_arn"])
+	d.Set("bound_iam_role_arn", resp.Data["bound_iam_role_arn"])
+	d.Set("bound_subnet_id", resp.Data["bound_subnet_id"])
+	d.Set("bound_vpc_id", resp.Data["bound_vpc_id"])
+
+	d.Set("bound_region", resp.Data["bound_region"])
 	d.Set("role_tag", resp.Data["role_tag"])
 	d.Set("bound_iam_principal_arn", resp.Data["bound_iam_principal_arn"])
 	d.Set("inferred_entity_type", resp.Data["inferred_entity_type"])
@@ -343,7 +410,8 @@ func awsAuthBackendRoleUpdate(d *schema.ResourceData, meta interface{}) error {
 	if len(policies) > 0 {
 		data["policies"] = policies
 	}
-	if authType == "ec2" || (inferred == "ec2_instance" && authType == "iam") {
+
+	if isEc2(authType, inferred) {
 		if v, ok := d.GetOk("bound_ami_id"); ok {
 			data["bound_ami_id"] = v.(string)
 		}
@@ -366,6 +434,7 @@ func awsAuthBackendRoleUpdate(d *schema.ResourceData, meta interface{}) error {
 			data["bound_iam_instance_profile_arn"] = v.(string)
 		}
 	}
+
 	if authType == "ec2" {
 		if v, ok := d.GetOk("role_tag"); ok {
 			data["role_tag"] = v.(string)
@@ -377,12 +446,18 @@ func awsAuthBackendRoleUpdate(d *schema.ResourceData, meta interface{}) error {
 			data["disallow_reauthentication"] = v.(bool)
 		}
 	}
+
 	if authType == "iam" {
 		if inferred != "" {
 			data["inferred_entity_type"] = inferred
 		}
 		if v, ok := d.GetOk("bound_iam_principal_arn"); ok {
-			data["bound_iam_principal_arn"] = v.(string)
+			iAmis := v.([]interface{})
+			amis := make([]string, 0, len(iAmis))
+			for _, iAmi := range iAmis {
+				amis = append(amis, iAmi.(string))
+			}
+			data["bound_iam_principal_arn"] = amis
 		}
 		if v, ok := d.GetOk("inferred_aws_region"); ok {
 			data["inferred_aws_region"] = v.(string)
@@ -399,6 +474,11 @@ func awsAuthBackendRoleUpdate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] Updated AWS auth backend role %q", path)
 
 	return awsAuthBackendRoleRead(d, meta)
+}
+
+func isEc2(authType, inferred string) bool {
+	isEc2InstanceWithIam := (inferred == "ec2_instance" && authType == "iam")
+	return authType == "ec2" || isEc2InstanceWithIam
 }
 
 func awsAuthBackendRoleDelete(d *schema.ResourceData, meta interface{}) error {
